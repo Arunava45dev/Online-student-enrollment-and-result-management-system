@@ -1,0 +1,29 @@
+# Environment variables and credentials
+.env
+.env.*
+!.env.example
+
+# Frontend build artifacts and dependencies
+frontend/node_modules/
+frontend/dist/
+
+# Python virtual environments, bytecode, and test/build output
+backend/venv/
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs and local databases
+*.log
+*.sqlite
+*.sqlite3
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
