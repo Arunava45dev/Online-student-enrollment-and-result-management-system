@@ -43,7 +43,7 @@ async def chat(payload: ChatRequest, current_user: dict = Depends(get_current_us
     return {"reply": reply}
 
 
-@router.post("/remark", response_model=RemarkResponse, dependencies=[Depends(require_role("faculty", "admin"))])
+@router.post("/remark", response_model=RemarkResponse, dependencies=[Depends(require_role("faculty"))])
 async def faculty_remark(payload: RemarkRequest):
     raw_id = payload.student_id.strip()
     student = None

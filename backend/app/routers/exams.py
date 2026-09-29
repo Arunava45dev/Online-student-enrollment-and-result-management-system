@@ -19,7 +19,7 @@ def exam_helper(e) -> dict:
     }
 
 
-@router.post("/", response_model=ExamResponse, dependencies=[Depends(require_role("admin", "faculty"))])
+@router.post("/", response_model=ExamResponse, dependencies=[Depends(require_role("faculty"))])
 async def schedule_exam(payload: ExamCreate):
     doc = payload.model_dump()
     result = await exams_collection.insert_one(doc)
@@ -28,12 +28,12 @@ async def schedule_exam(payload: ExamCreate):
 
 
 @router.get("/", response_model=List[ExamResponse])
-async def list_exams(current_user: dict = Depends(get_current_user)):
+async def list_exams(current_user: dict = Depends(require_role("faculty"))):
     docs = await exams_collection.find().to_list(200)
     return [exam_helper(d) for d in docs]
 
 
-@router.delete("/{exam_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_role("admin", "faculty"))])
+@router.delete("/{exam_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_role("faculty"))])
 async def delete_exam(exam_id: str):
     if not ObjectId.is_valid(exam_id):
         raise HTTPException(status_code=400, detail="Invalid exam ID")

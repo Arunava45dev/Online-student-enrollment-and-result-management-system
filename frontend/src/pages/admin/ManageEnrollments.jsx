@@ -4,7 +4,7 @@ import Loader from "../../components/Loader";
 import StatusStamp from "../../components/StatusStamp";
 import { listAllEnrollments, cancelEnrollment } from "../../api/enrollments";
 import { extractErrorMessage } from "../../api/client";
-import { ADMIN_NAV } from "./nav";
+import { FACULTY_NAV } from "../admin/nav";
 
 export default function ManageEnrollments() {
   const [rows, setRows] = useState([]);
@@ -41,7 +41,7 @@ export default function ManageEnrollments() {
   }
 
   return (
-    <Shell groups={ADMIN_NAV}>
+    <Shell groups={FACULTY_NAV}>
       <p className="page-eyebrow">Ledger</p>
       <h1 className="page-title">Enrollments</h1>
       <p className="page-subtitle">Every student enrollment on file.</p>

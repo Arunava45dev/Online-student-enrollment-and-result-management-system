@@ -1,19 +1,31 @@
 import { BookOpen, Users, ClipboardList, CalendarCheck2, Award, Bell, Sparkles } from "lucide-react";
 
+/** Sidebar nav for the Admin role — students, results, notices, exams */
 export const ADMIN_NAV = [
   {
-    eyebrow: "Records",
+    eyebrow: "Registry",
     links: [
-      { to: "/admin", label: "Courses", end: true, icon: BookOpen },
-      { to: "/admin/students", label: "Students", icon: Users },
-      { to: "/admin/enrollments", label: "Enrollments", icon: ClipboardList },
-      { to: "/admin/exams", label: "Exams", icon: CalendarCheck2 },
-      { to: "/admin/results", label: "Publish results", icon: Award },
-      { to: "/admin/notices", label: "Notices", icon: Bell },
+      { to: "/admin",          label: "Students",        end: true, icon: Users },
+      { to: "/admin/results",  label: "Publish Results", icon: Award },
+      { to: "/admin/notices",  label: "Notices",         icon: Bell },
+    ],
+  },
+];
+
+/** Sidebar nav for the Faculty role — courses, enrollments, AI remark */
+export const FACULTY_NAV = [
+  {
+    eyebrow: "Academic",
+    links: [
+      { to: "/faculty",              label: "Courses",     end: true, icon: BookOpen },
+      { to: "/faculty/exams",        label: "Exams",       icon: CalendarCheck2 },
+      { to: "/faculty/enrollments",  label: "Enrollments", icon: ClipboardList },
     ],
   },
   {
     eyebrow: "Assistant",
-    links: [{ to: "/admin/remark", label: "AI faculty remark", icon: Sparkles }],
+    links: [
+      { to: "/faculty/remark", label: "AI Faculty Remark", icon: Sparkles },
+    ],
   },
 ];

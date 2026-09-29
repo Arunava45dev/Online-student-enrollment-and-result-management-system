@@ -20,7 +20,7 @@ def course_helper(course) -> dict:
     }
 
 
-@router.post("/", response_model=CourseOut, dependencies=[Depends(require_role("admin"))])
+@router.post("/", response_model=CourseOut, dependencies=[Depends(require_role("faculty"))])
 async def create_course(payload: CourseCreate):
     existing = await courses_collection.find_one({"code": payload.code})
     if existing:
@@ -41,8 +41,11 @@ async def list_courses(semester: Optional[int] = None, current_user: dict = Depe
     return [course_helper(c) for c in courses]
 
 
-@router.delete("/{course_id}", dependencies=[Depends(require_role("admin"))])
+@router.delete("/{course_id}", dependencies=[Depends(require_role("faculty"))])
 async def delete_course(course_id: str):
+    if not ObjectId.is_valid(course_id):
+        raise HTTPException(status_code=400, detail="Invalid course ID")
+
     result = await courses_collection.delete_one({"_id": ObjectId(course_id)})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Course not found")

@@ -12,7 +12,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from app.database import users_collection
 from app.auth import hash_password, verify_password, create_access_token, get_current_user
 from app.config import settings
-from app.schemas.user import PasswordResetConfirm, PasswordResetRequest
+from app.schemas.user import PasswordResetConfirm, PasswordResetRequest, UserRegister
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -27,16 +27,16 @@ def user_helper(user) -> dict:
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
-async def register(user: dict):
-    existing = await users_collection.find_one({"email": user["email"]})
+async def register(user: UserRegister):
+    existing = await users_collection.find_one({"email": str(user.email)})
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
 
     doc = {
-        "name": user["name"],
-        "email": user["email"],
-        "password": hash_password(user["password"]),
-        "role": user.get("role", "student"),
+        "name": user.name,
+        "email": str(user.email),
+        "password": hash_password(user.password),
+        "role": user.role.value,
     }
     result = await users_collection.insert_one(doc)
     doc["_id"] = result.inserted_id
@@ -116,4 +116,11 @@ async def reset_password(payload: PasswordResetConfirm):
 async def get_current_admin(current_user: dict = Depends(get_current_user)) -> dict:
     if current_user.get("role") not in ["admin", "faculty"]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin or faculty access required")
+    return current_user
+
+
+# Strict admin-only guard (used by notices, results — admin section).
+async def get_admin_only(current_user: dict = Depends(get_current_user)) -> dict:
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
     return current_user

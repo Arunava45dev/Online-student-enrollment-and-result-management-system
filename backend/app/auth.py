@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
+import bcrypt
 from jose import jwt, JWTError
-from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from bson import ObjectId
@@ -8,16 +8,22 @@ from bson import ObjectId
 from app.config import settings
 from app.database import users_collection
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    if len(password.encode("utf-8")) > 72:
+        raise ValueError("Password must be 72 bytes or fewer")
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    if len(plain.encode("utf-8")) > 72:
+        return False
+    try:
+        return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
+    except (TypeError, ValueError):
+        return False
 
 
 # Backward compatibility alias
@@ -43,6 +49,11 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
         if user_id is None:
             raise credentials_exception
     except JWTError:
+        raise credentials_exception
+
+    # A validly signed token can still contain a malformed or stale subject.
+    # Treat it as an invalid credential rather than letting ObjectId raise a 500.
+    if not ObjectId.is_valid(user_id):
         raise credentials_exception
 
     user = await users_collection.find_one({"_id": ObjectId(user_id)})

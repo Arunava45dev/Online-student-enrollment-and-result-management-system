@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { GraduationCap, ShieldCheck, AlertCircle, ArrowRight } from "lucide-react";
+import { GraduationCap, ShieldCheck, BookOpenCheck, AlertCircle, ArrowRight } from "lucide-react";
 import { useAuth, extractErrorMessage } from "../context/AuthContext";
 import Seal from "../components/Seal";
 
@@ -19,7 +19,9 @@ export default function Login() {
     setBusy(true);
     try {
       const resolvedRole = await login({ email, password, fallbackRole });
-      navigate(resolvedRole === "student" ? "/student" : "/admin", { replace: true });
+      if (resolvedRole === "student") navigate("/student", { replace: true });
+      else if (resolvedRole === "faculty") navigate("/faculty", { replace: true });
+      else navigate("/admin", { replace: true });
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {
@@ -79,8 +81,11 @@ export default function Login() {
                 <button type="button" className={fallbackRole === "student" ? "active" : ""} onClick={() => setFallbackRole("student")}>
                   <GraduationCap size={15} /> Student
                 </button>
+                <button type="button" className={fallbackRole === "faculty" ? "active" : ""} onClick={() => setFallbackRole("faculty")}>
+                  <BookOpenCheck size={15} /> Faculty
+                </button>
                 <button type="button" className={fallbackRole === "admin" ? "active" : ""} onClick={() => setFallbackRole("admin")}>
-                  <ShieldCheck size={15} /> Admin / Faculty
+                  <ShieldCheck size={15} /> Admin
                 </button>
               </div>
             </div>

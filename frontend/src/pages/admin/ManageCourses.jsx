@@ -4,7 +4,7 @@ import Shell from "../../components/Shell";
 import Loader from "../../components/Loader";
 import { listCourses, createCourse, deleteCourse } from "../../api/courses";
 import { extractErrorMessage } from "../../api/client";
-import { ADMIN_NAV } from "./nav";
+import { FACULTY_NAV } from "./nav";
 import { SEMESTERS, semesterLabel } from "../../constants/semesters";
 
 const EMPTY_FORM = { code: "", title: "", credits: "", description: "", semester: "1" };
@@ -65,7 +65,7 @@ export default function ManageCourses() {
   }
 
   return (
-    <Shell groups={ADMIN_NAV}>
+    <Shell groups={FACULTY_NAV}>
       <p className="page-eyebrow">Catalog</p>
       <h1 className="page-title">Courses</h1>
       <p className="page-subtitle">Create and remove courses in the catalog.</p>

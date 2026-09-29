@@ -5,7 +5,9 @@ pydantic==2.9.2
 email-validator>=2.0.0
 pydantic-settings==2.5.2
 python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
+# Use bcrypt directly. This avoids Passlib's incompatible bcrypt backend
+# detection on current Python installations.
+bcrypt==4.0.1
 python-multipart==0.0.9
 openai==1.51.0
 python-dotenv==1.0.1

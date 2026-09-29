@@ -3,7 +3,7 @@ import { Sparkles, Copy, Check, RotateCcw, Award, BookOpen, User, AlertCircle, F
 import Shell from "../../components/Shell";
 import { generateRemark } from "../../api/ai";
 import { extractErrorMessage } from "../../api/client";
-import { ADMIN_NAV } from "./nav";
+import { FACULTY_NAV } from "./nav";
 
 export default function AiRemark() {
   const [studentId, setStudentId] = useState("");
@@ -64,7 +64,7 @@ export default function AiRemark() {
   }
 
   return (
-    <Shell groups={ADMIN_NAV}>
+    <Shell groups={FACULTY_NAV}>
       <p className="page-eyebrow">Faculty Assistant</p>
       <h1 className="page-title">AI Faculty Remark</h1>
       <p className="page-subtitle">

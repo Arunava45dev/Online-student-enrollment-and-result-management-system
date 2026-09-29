@@ -6,7 +6,7 @@ from bson import ObjectId
 from typing import List, Optional
 
 from app.schemas.result import ResultCreate, ResultResponse
-from app.routers.auth import get_current_admin, get_current_user
+from app.routers.auth import get_current_admin, get_admin_only, get_current_user
 from app.database import db
 from app.services.pdf_service import generate_marksheet_pdf
 
@@ -14,7 +14,7 @@ router = APIRouter(prefix="/results", tags=["Results"])
 
 
 @router.post("/", response_model=ResultResponse, status_code=status.HTTP_201_CREATED)
-async def publish_result(result: ResultCreate, admin: dict = Depends(get_current_admin)):
+async def publish_result(result: ResultCreate, admin: dict = Depends(get_admin_only)):
     result_dict = result.model_dump()
     new_result = await db["results"].insert_one(result_dict)
     result_dict["id"] = str(new_result.inserted_id)
@@ -24,7 +24,7 @@ async def publish_result(result: ResultCreate, admin: dict = Depends(get_current
 
 
 @router.get("/", response_model=List[ResultResponse])
-async def list_results(admin: dict = Depends(get_current_admin)):
+async def list_results(admin: dict = Depends(get_admin_only)):
     results = await db["results"].find().sort("_id", -1).to_list(200)
     return [{
         "id": str(r["_id"]),
@@ -37,7 +37,7 @@ async def list_results(admin: dict = Depends(get_current_admin)):
 
 
 @router.delete("/{result_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_result(result_id: str, admin: dict = Depends(get_current_admin)):
+async def delete_result(result_id: str, admin: dict = Depends(get_admin_only)):
     if not ObjectId.is_valid(result_id):
         raise HTTPException(status_code=400, detail="Invalid result ID")
     deleted = await db["results"].delete_one({"_id": ObjectId(result_id)})

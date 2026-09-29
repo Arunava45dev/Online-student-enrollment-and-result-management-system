@@ -3,7 +3,7 @@ import Shell from "../../components/Shell";
 import Loader from "../../components/Loader";
 import { listExams, scheduleExam, deleteExam } from "../../api/exams";
 import { extractErrorMessage } from "../../api/client";
-import { ADMIN_NAV } from "./nav";
+import { FACULTY_NAV } from "./nav";
 
 const EMPTY_FORM = { course_id: "", title: "", date: "" };
 
@@ -56,7 +56,7 @@ export default function ManageExams() {
   }
 
   return (
-    <Shell groups={ADMIN_NAV}>
+    <Shell groups={FACULTY_NAV}>
       <p className="page-eyebrow">Schedule</p>
       <h1 className="page-title">Exams</h1>
       <p className="page-subtitle">Schedule exams tied to a course.</p>

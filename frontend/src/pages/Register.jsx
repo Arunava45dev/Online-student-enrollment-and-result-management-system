@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { GraduationCap, ShieldCheck, AlertCircle, CheckCircle2, ArrowRight } from "lucide-react";
+import { GraduationCap, ShieldCheck, BookOpenCheck, AlertCircle, CheckCircle2, ArrowRight } from "lucide-react";
 import { useAuth, extractErrorMessage } from "../context/AuthContext";
 import Seal from "../components/Seal";
 
@@ -20,6 +20,10 @@ export default function Register() {
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
+    if (new TextEncoder().encode(form.password).length > 72) {
+      setError("Password must be 72 bytes or fewer. Please use a shorter password.");
+      return;
+    }
     setBusy(true);
     try {
       await register({ ...form, role });
@@ -78,7 +82,7 @@ export default function Register() {
             </div>
             <div className="field">
               <label htmlFor="reg-password">Password</label>
-              <input id="reg-password" type="password" value={form.password} onChange={(e) => update("password", e.target.value)} required />
+              <input id="reg-password" type="password" minLength="6" maxLength="72" value={form.password} onChange={(e) => update("password", e.target.value)} required />
             </div>
 
             <div className="field">
@@ -87,8 +91,11 @@ export default function Register() {
                 <button type="button" className={role === "student" ? "active" : ""} onClick={() => setRole("student")}>
                   <GraduationCap size={15} /> Student
                 </button>
+                <button type="button" className={role === "faculty" ? "active" : ""} onClick={() => setRole("faculty")}>
+                  <BookOpenCheck size={15} /> Faculty
+                </button>
                 <button type="button" className={role === "admin" ? "active" : ""} onClick={() => setRole("admin")}>
-                  <ShieldCheck size={15} /> Admin / Faculty
+                  <ShieldCheck size={15} /> Admin
                 </button>
               </div>
             </div>

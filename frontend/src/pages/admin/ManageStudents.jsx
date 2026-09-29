@@ -5,8 +5,10 @@ import { createStudent, deleteStudent, listStudents } from "../../api/students";
 import { extractErrorMessage } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { ADMIN_NAV } from "./nav";
+import { DEPARTMENTS, departmentLabel } from "../../constants/departments";
+import { SEMESTERS, semesterLabel } from "../../constants/semesters";
 
-const EMPTY_FORM = { name: "", email: "", roll_number: "" };
+const EMPTY_FORM = { name: "", email: "", roll_number: "", department: "CSE", semester: "1" };
 
 export default function ManageStudents() {
   const [students, setStudents] = useState([]);
@@ -16,12 +18,13 @@ export default function ManageStudents() {
   const [deletingId, setDeletingId] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [department, setDepartment] = useState("");
   const { role } = useAuth();
 
   async function load() {
     setLoading(true);
     try {
-      const res = await listStudents();
+      const res = await listStudents(department);
       setStudents(res.data || []);
     } catch (err) {
       setError(extractErrorMessage(err));
@@ -30,7 +33,7 @@ export default function ManageStudents() {
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [department]);
 
   function update(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -42,7 +45,7 @@ export default function ManageStudents() {
     setError("");
     setSuccess("");
     try {
-      const res = await createStudent(form);
+      const res = await createStudent({ ...form, semester: Number(form.semester) });
       setSuccess(`Student record created${res.data?.id ? ` (id ${res.data.id})` : ""}.`);
       setForm(EMPTY_FORM);
       await load();
@@ -77,19 +80,25 @@ export default function ManageStudents() {
     <Shell groups={ADMIN_NAV}>
       <p className="page-eyebrow">Registry</p>
       <h1 className="page-title">Students</h1>
-      <p className="page-subtitle">Review student records and remove registry entries when necessary.</p>
+      <p className="page-subtitle">Organize student records by department and semester.</p>
 
       {error && <div className="error-banner">{error}</div>}
       {success && <div className="success-banner">{success}</div>}
 
       <div className="panel" style={{ marginBottom: 20 }}>
-        <div className="panel-header"><h2>All students</h2></div>
+        <div className="panel-header">
+          <h2>All students</h2>
+          <select aria-label="Filter students by department" value={department} onChange={(event) => setDepartment(event.target.value)} style={{ maxWidth: 280 }}>
+            <option value="">All departments</option>
+            {DEPARTMENTS.map((item) => <option key={item.code} value={item.code}>{item.label}</option>)}
+          </select>
+        </div>
         <div style={{ overflowX: "auto" }}>
           <table className="ledger">
-            <thead><tr><th>ID</th><th>Name</th><th>Roll No.</th><th>Email</th><th>Actions</th></tr></thead>
+            <thead><tr><th>ID</th><th>Name</th><th>Roll No.</th><th>Department</th><th>Semester</th><th>Email</th><th>Actions</th></tr></thead>
             <tbody>
               {!loading && students.length === 0 && (
-                <tr className="empty-row"><td colSpan={5}>No student records on file.</td></tr>
+                <tr className="empty-row"><td colSpan={7}>No student records found for this department.</td></tr>
               )}
               {students.map((student) => (
                 <tr key={student.id}>
@@ -105,6 +114,8 @@ export default function ManageStudents() {
                   </td>
                   <td>{student.name}</td>
                   <td className="num">{student.roll_number}</td>
+                  <td>{departmentLabel(student.department)}</td>
+                  <td>{semesterLabel(student.semester || 1)}</td>
                   <td>{student.email}</td>
                   <td>
                     <button
@@ -139,6 +150,18 @@ export default function ManageStudents() {
               <div className="field">
                 <label htmlFor="s-roll">Roll number</label>
                 <input id="s-roll" value={form.roll_number} onChange={(e) => update("roll_number", e.target.value)} required />
+              </div>
+              <div className="field">
+                <label htmlFor="s-department">Department</label>
+                <select id="s-department" value={form.department} onChange={(e) => update("department", e.target.value)} required>
+                  {DEPARTMENTS.map((item) => <option key={item.code} value={item.code}>{item.label}</option>)}
+                </select>
+              </div>
+              <div className="field">
+                <label htmlFor="s-semester">Semester</label>
+                <select id="s-semester" value={form.semester} onChange={(e) => update("semester", e.target.value)} required>
+                  {SEMESTERS.map((item) => <option key={item} value={item}>{semesterLabel(item)}</option>)}
+                </select>
               </div>
               <button className="btn btn-block" type="submit" disabled={saving}>
                 {saving ? "Saving..." : "Create student"}

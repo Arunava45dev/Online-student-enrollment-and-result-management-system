@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status, Depends
-from typing import List
+from typing import List, Optional
 from bson import ObjectId
 
 from app.database import students_collection
@@ -32,13 +32,19 @@ async def create_student(student: StudentCreate):
     return student_helper(doc)
 
 
-@router.get("/", response_model=List[StudentResponse], dependencies=[Depends(require_role("admin", "faculty"))])
-async def list_students():
-    docs = await students_collection.find().to_list(500)
+@router.get("/", response_model=List[StudentResponse], dependencies=[Depends(require_role("admin"))])
+async def list_students(department: Optional[str] = None):
+    normalized_department = department.strip().upper() if department else None
+    query = (
+        {"department": {"$in": ["GENERAL", "General"]}}
+        if normalized_department == "GENERAL"
+        else ({"department": normalized_department} if normalized_department else {})
+    )
+    docs = await students_collection.find(query).to_list(500)
     return [student_helper(d) for d in docs]
 
 
-@router.delete("/{student_id}", dependencies=[Depends(require_role("admin", "faculty"))])
+@router.delete("/{student_id}", dependencies=[Depends(require_role("admin"))])
 async def delete_student(student_id: str):
     """Remove a registry record without affecting login accounts or results."""
     if not ObjectId.is_valid(student_id):

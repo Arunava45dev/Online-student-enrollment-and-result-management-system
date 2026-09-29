@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from bson import ObjectId
 from fastapi import APIRouter, Depends, status, HTTPException
-from app.routers.auth import get_current_admin
+from app.routers.auth import get_admin_only
 from app.database import db
 
 router = APIRouter(prefix="/notices", tags=["Notices"])
@@ -18,7 +18,7 @@ async def get_notices():
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_notice(notice: dict, admin: dict = Depends(get_current_admin)):
+async def create_notice(notice: dict, admin: dict = Depends(get_admin_only)):
     doc = dict(notice)
     if "created_at" not in doc or not doc["created_at"]:
         doc["created_at"] = datetime.now(timezone.utc).isoformat()
@@ -33,7 +33,7 @@ async def create_notice(notice: dict, admin: dict = Depends(get_current_admin)):
 
 
 @router.delete("/{notice_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_notice(notice_id: str, admin: dict = Depends(get_current_admin)):
+async def delete_notice(notice_id: str, admin: dict = Depends(get_admin_only)):
     if not ObjectId.is_valid(notice_id):
         raise HTTPException(status_code=400, detail="Invalid notice ID")
     deleted = await db["notices"].delete_one({"_id": ObjectId(notice_id)})
