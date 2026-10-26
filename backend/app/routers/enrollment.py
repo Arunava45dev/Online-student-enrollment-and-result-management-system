@@ -363,6 +363,49 @@ def _make_pdf(student: dict, enrollments: list, semester: int | None) -> bytes:
     return buf.read()
 
 
+def _make_faculty_enrollment_pdf(enrollments: list, semester: int | None) -> bytes:
+    """Render the faculty's semester enrollment register."""
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=14 * mm, rightMargin=14 * mm, topMargin=15 * mm, bottomMargin=15 * mm)
+    styles = getSampleStyleSheet()
+    title = ParagraphStyle("FacultyReportTitle", parent=styles["Title"], fontName="Helvetica-Bold", fontSize=18, textColor=_DARK_NAVY, alignment=TA_CENTER, spaceAfter=5)
+    subtitle = ParagraphStyle("FacultyReportSub", parent=styles["Normal"], fontSize=9, textColor=_GREY_TEXT, alignment=TA_CENTER, spaceAfter=14)
+    cell = ParagraphStyle("FacultyReportCell", parent=styles["Normal"], fontSize=8, leading=10, textColor=_DARK_NAVY)
+    head = ParagraphStyle("FacultyReportHead", parent=cell, fontName="Helvetica-Bold", textColor=_WHITE)
+    sem_label = f"Semester {semester}" if semester else "All semesters"
+    story = [
+        Paragraph("ENROLLMENT REGISTER", title),
+        Paragraph(f"{sem_label} &nbsp;•&nbsp; Generated {datetime.utcnow().strftime('%d %B %Y, %H:%M UTC')}", subtitle),
+    ]
+    rows = [[Paragraph(label, head) for label in ["#", "Student", "Course", "Semester", "Enrolled on", "Status"]]]
+    for index, enrollment in enumerate(enrollments, 1):
+        enrolled_on = str(enrollment.get("enrolled_at", ""))[:10] or "—"
+        student_name = enrollment.get("student_name") or enrollment.get("student_id", "—")
+        course_name = enrollment.get("course_title") or enrollment.get("course_name") or enrollment.get("course_id", "—")
+        rows.append([
+            Paragraph(str(index), cell), Paragraph(student_name, cell), Paragraph(course_name, cell),
+            Paragraph(str(enrollment.get("semester", "—")), cell), Paragraph(enrolled_on, cell),
+            Paragraph((enrollment.get("status") or "enrolled").title(), cell),
+        ])
+    if not enrollments:
+        rows.append([Paragraph("No enrollments found for this selection.", cell), "", "", "", "", ""])
+        span = [("SPAN", (0, 1), (-1, 1))]
+    else:
+        span = []
+    table = Table(rows, colWidths=[10 * mm, 42 * mm, 57 * mm, 20 * mm, 28 * mm, 25 * mm], repeatRows=1)
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), _DARK_NAVY), ("TEXTCOLOR", (0, 0), (-1, 0), _WHITE),
+        ("GRID", (0, 0), (-1, -1), 0.35, colors.HexColor("#DDE0EC")),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [_WHITE, _LIGHT_ROW]),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6), ("LEFTPADDING", (0, 0), (-1, -1), 5),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 5), *span,
+    ]))
+    story.extend([table, Spacer(1, 7 * mm), Paragraph(f"Total enrollments: <b>{len(enrollments)}</b>", cell)])
+    doc.build(story)
+    return buf.getvalue()
+
+
 # ── PDF endpoint ─────────────────────────────────────────────────────────────
 
 @router.get("/me/pdf")
@@ -410,9 +453,22 @@ async def my_enrollments(semester: int | None = None, current_user: dict = Depen
 
 
 @router.get("/", response_model=List[EnrollmentOut], dependencies=[Depends(require_role("faculty"))])
-async def all_enrollments():
-    docs = await enrollments_collection.find().to_list(500)
+async def all_enrollments(semester: int | None = Query(default=None, ge=1, le=8)):
+    query = ({"$or": [{"semester": 1}, {"semester": {"$exists": False}}]}
+             if semester == 1 else ({"semester": semester} if semester is not None else {}))
+    docs = await enrollments_collection.find(query).to_list(500)
     return [await enrollment_helper(d) for d in docs]
+
+
+@router.get("/report/pdf", dependencies=[Depends(require_role("faculty"))])
+async def download_faculty_enrollment_pdf(semester: int | None = Query(default=None, ge=1, le=8)):
+    query = ({"$or": [{"semester": 1}, {"semester": {"$exists": False}}]}
+             if semester == 1 else ({"semester": semester} if semester is not None else {}))
+    docs = await enrollments_collection.find(query).to_list(500)
+    enrollments_data = [await enrollment_helper(doc) for doc in docs]
+    pdf_bytes = _make_faculty_enrollment_pdf(enrollments_data, semester)
+    suffix = f"_semester_{semester}" if semester else "_all_semesters"
+    return StreamingResponse(io.BytesIO(pdf_bytes), media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="enrollment_register{suffix}.pdf"'})
 
 
 @router.delete("/{enrollment_id}", dependencies=[Depends(require_role("student", "faculty"))])

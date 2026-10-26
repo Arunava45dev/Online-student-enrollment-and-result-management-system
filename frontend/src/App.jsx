@@ -14,6 +14,8 @@ import MyEnrollments from "./pages/student/MyEnrollments";
 import MyResults from "./pages/student/MyResults";
 import Notices from "./pages/student/Notices";
 import AiChat from "./pages/student/AiChat";
+import HallTicket from "./pages/student/HallTicket";
+import StudentDashboard from "./pages/student/StudentDashboard";
 
 // Admin pages — students, results, notices, exams
 import ManageStudents from "./pages/admin/ManageStudents";
@@ -45,8 +47,10 @@ export default function App() {
 
       {/* ── Student ─────────────────────────────────────── */}
       <Route path="/student" element={<ProtectedRoute allow={["student"]}><StudentCourses /></ProtectedRoute>} />
+      <Route path="/student/dashboard" element={<ProtectedRoute allow={["student"]}><StudentDashboard /></ProtectedRoute>} />
       <Route path="/student/enrollments" element={<ProtectedRoute allow={["student"]}><MyEnrollments /></ProtectedRoute>} />
       <Route path="/student/results" element={<ProtectedRoute allow={["student"]}><MyResults /></ProtectedRoute>} />
+      <Route path="/student/hall-ticket" element={<ProtectedRoute allow={["student"]}><HallTicket /></ProtectedRoute>} />
       <Route path="/student/notices" element={<ProtectedRoute allow={["student"]}><Notices /></ProtectedRoute>} />
       <Route path="/student/chat" element={<ProtectedRoute allow={["student"]}><AiChat /></ProtectedRoute>} />
 

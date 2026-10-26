@@ -11,6 +11,16 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str = Field(min_length=6)
     role: Role = Role.student
+    department: str = "GENERAL"
+
+    @field_validator("department")
+    @classmethod
+    def validate_department(cls, department: str) -> str:
+        valid_departments = {"CSE", "IT", "ME", "ECE", "EE", "CE", "EEE", "AI&DS", "GENERAL"}
+        normalized = department.strip().upper()
+        if normalized not in valid_departments:
+            raise ValueError("Department must be one of: CSE, IT, ME, ECE, EE, CE, EEE, AI&DS, or GENERAL")
+        return normalized
 
     @field_validator("password")
     @classmethod
@@ -46,6 +56,7 @@ class UserOut(BaseModel):
     name:str
     email:EmailStr
     role:Role
+    department: str = "GENERAL"
 
 class Token(BaseModel):
     access_token:str

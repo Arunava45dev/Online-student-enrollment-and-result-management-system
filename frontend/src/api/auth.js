@@ -2,8 +2,8 @@ import client from "./client";
 
 // Backend schema: UserRegister — adjust field names here if your
 // actual schema differs (check /docs → Schemas → UserRegister).
-export function registerUser({ name, email, password, role }) {
-  return client.post("/auth/register", { name, email, password, role });
+export function registerUser({ name, email, password, role, department }) {
+  return client.post("/auth/register", { name, email, password, role, department });
 }
 
 // Backend schema: Body_login_auth_login_post — FastAPI's default

@@ -3,11 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { GraduationCap, ShieldCheck, BookOpenCheck, AlertCircle, CheckCircle2, ArrowRight } from "lucide-react";
 import { useAuth, extractErrorMessage } from "../context/AuthContext";
 import Seal from "../components/Seal";
+import { DEPARTMENTS } from "../constants/departments";
 
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", department: "CSE" });
   const [role, setRole] = useState("student");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -83,6 +84,12 @@ export default function Register() {
             <div className="field">
               <label htmlFor="reg-password">Password</label>
               <input id="reg-password" type="password" minLength="6" maxLength="72" value={form.password} onChange={(e) => update("password", e.target.value)} required />
+            </div>
+            <div className="field">
+              <label htmlFor="reg-department">Department</label>
+              <select id="reg-department" value={form.department} onChange={(e) => update("department", e.target.value)} required>
+                {DEPARTMENTS.map((department) => <option key={department.code} value={department.code}>{department.label}</option>)}
+              </select>
             </div>
 
             <div className="field">

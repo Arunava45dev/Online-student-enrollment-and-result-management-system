@@ -1,6 +1,6 @@
 import client from "./client";
 
-export const listAllEnrollments = () => client.get("/enrollments/");
+export const listAllEnrollments = (semester) => client.get("/enrollments/", { params: semester ? { semester } : {} });
 export const enroll = (payload) => client.post("/enrollments/", payload);
 export const myEnrollments = (semester) => client.get("/enrollments/me", { params: semester ? { semester } : {} });
 export const cancelEnrollment = (enrollmentId) => client.delete(`/enrollments/${enrollmentId}`);
@@ -22,5 +22,20 @@ export async function downloadEnrollmentPDF(semester) {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+export async function downloadFacultyEnrollmentPDF(semester) {
+  const res = await client.get("/enrollments/report/pdf", {
+    params: semester ? { semester } : {},
+    responseType: "blob",
+  });
+  const url = URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `enrollment_register_semester_${semester}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
   URL.revokeObjectURL(url);
 }

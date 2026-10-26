@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { LogOut, Menu, Moon, Sun, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { departmentLabel } from "../constants/departments";
 import Seal from "./Seal";
 
 // Shared app frame: topbar with seal brand + user chip, sidebar nav.
 // `groups` = [{ eyebrow: "Records", links: [{ to, label, icon: LucideIcon, end }] }]
 export default function Shell({ groups, children }) {
-  const { name, role, logout } = useAuth();
+  const { name, role, department, logout } = useAuth();
   const navigate = useNavigate();
   const [navOpen, setNavOpen] = useState(false);
   const [theme, setTheme] = useState(() => localStorage.getItem("registrar-theme") || "dark");
@@ -50,6 +51,11 @@ export default function Shell({ groups, children }) {
             <span className="avatar">{initial}</span>
             {name || "—"}
             <span className="role-pill">{role}</span>
+            {(role === "student" || role === "faculty") && (
+              <span className="department-pill" title={`Department: ${departmentLabel(department)}`}>
+                {departmentLabel(department)}
+              </span>
+            )}
           </div>
           <button className="btn btn-outline btn-sm" onClick={handleLogout}>
             <LogOut size={14} /> Sign out

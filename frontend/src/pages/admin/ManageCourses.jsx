@@ -8,6 +8,7 @@ import { FACULTY_NAV } from "./nav";
 import { SEMESTERS, semesterLabel } from "../../constants/semesters";
 
 const EMPTY_FORM = { code: "", title: "", credits: "", description: "", semester: "1" };
+const ALL_SEMESTERS = "all";
 
 export default function ManageCourses() {
   const [courses, setCourses] = useState([]);
@@ -16,12 +17,13 @@ export default function ManageCourses() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [selectedSemester, setSelectedSemester] = useState(ALL_SEMESTERS);
 
-  async function load() {
+  async function load(semester = selectedSemester) {
     setLoading(true);
     setError("");
     try {
-      const res = await listCourses();
+      const res = await listCourses(semester === ALL_SEMESTERS ? undefined : Number(semester));
       setCourses(res.data || []);
     } catch (err) {
       setError(extractErrorMessage(err));
@@ -30,7 +32,7 @@ export default function ManageCourses() {
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(selectedSemester); }, [selectedSemester]);
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -43,7 +45,7 @@ export default function ManageCourses() {
     try {
       await createCourse({ ...form, credits: Number(form.credits) || 0, semester: Number(form.semester) });
       setForm(EMPTY_FORM);
-      await load();
+      await load(selectedSemester);
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {
@@ -68,18 +70,18 @@ export default function ManageCourses() {
     <Shell groups={FACULTY_NAV}>
       <p className="page-eyebrow">Catalog</p>
       <h1 className="page-title">Courses</h1>
-      <p className="page-subtitle">Create and remove courses in the catalog.</p>
+      <p className="page-subtitle">Create, remove, and review courses semester by semester.</p>
 
       {error && <div className="error-banner"><AlertCircle size={15} /> {error}</div>}
 
       {!loading && (
         <div className="stat-row">
           <div className="stat-card">
-            <div className="stat-label"><LayoutGrid size={13} /> Total courses</div>
+            <div className="stat-label"><LayoutGrid size={13} /> {selectedSemester === ALL_SEMESTERS ? "Total courses" : "Courses this semester"}</div>
             <div className="stat-value">{courses.length}</div>
           </div>
           <div className="stat-card">
-            <div className="stat-label"><GraduationCap size={13} /> Total credits</div>
+            <div className="stat-label"><GraduationCap size={13} /> {selectedSemester === ALL_SEMESTERS ? "Total credits" : "Credits this semester"}</div>
             <div className="stat-value">{courses.reduce((sum, c) => sum + (Number(c.credits) || 0), 0)}</div>
           </div>
         </div>
@@ -87,7 +89,16 @@ export default function ManageCourses() {
 
       <div className="grid-2">
         <div className="panel section-gap">
-          <div className="panel-header"><h2><BookOpen size={16} /> All courses</h2></div>
+          <div className="panel-header course-list-header">
+            <h2><BookOpen size={16} /> {selectedSemester === ALL_SEMESTERS ? "All courses" : semesterLabel(selectedSemester)}</h2>
+            <div className="semester-switcher">
+              <label htmlFor="course-semester-filter">View</label>
+              <select id="course-semester-filter" value={selectedSemester} onChange={(event) => setSelectedSemester(event.target.value)} aria-label="Filter courses by semester">
+                <option value={ALL_SEMESTERS}>All semesters</option>
+                {SEMESTERS.map((semester) => <option key={semester} value={semester}>{semesterLabel(semester)}</option>)}
+              </select>
+            </div>
+          </div>
           <div style={{ overflowX: "auto" }}>
             {loading ? (
               <Loader />

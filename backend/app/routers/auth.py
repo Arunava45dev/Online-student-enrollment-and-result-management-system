@@ -23,6 +23,7 @@ def user_helper(user) -> dict:
         "name": user["name"],
         "email": user["email"],
         "role": user["role"],
+        "department": user.get("department", "GENERAL"),
     }
 
 
@@ -37,6 +38,7 @@ async def register(user: UserRegister):
         "email": str(user.email),
         "password": hash_password(user.password),
         "role": user.role.value,
+        "department": user.department,
     }
     result = await users_collection.insert_one(doc)
     doc["_id"] = result.inserted_id

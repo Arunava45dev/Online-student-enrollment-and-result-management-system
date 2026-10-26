@@ -458,3 +458,70 @@ def generate_marksheet_pdf(
     pdf_bytes = buffer.getvalue()
     buffer.close()
     return pdf_bytes
+
+
+def generate_hall_ticket_pdf(student_info: Dict[str, Any], exams: List[Dict[str, Any]], semester: int) -> bytes:
+    """Generate an official, semester-specific hall ticket in memory."""
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=36, rightMargin=36, topMargin=36, bottomMargin=36)
+    styles = getSampleStyleSheet()
+    title = ParagraphStyle("HallTicketTitle", parent=styles["Normal"], fontName="Helvetica-Bold", fontSize=18, leading=22, alignment=1, textColor=colors.HexColor("#0F172A"))
+    subtitle = ParagraphStyle("HallTicketSubtitle", parent=styles["Normal"], fontName="Helvetica", fontSize=10, leading=13, alignment=1, textColor=colors.HexColor("#475569"))
+    heading = ParagraphStyle("HallTicketHeading", parent=styles["Normal"], fontName="Helvetica-Bold", fontSize=13, leading=16, alignment=1, textColor=colors.HexColor("#1E3A8A"))
+    label = ParagraphStyle("HallTicketLabel", parent=styles["Normal"], fontName="Helvetica-Bold", fontSize=9, leading=11, textColor=colors.HexColor("#334155"))
+    value = ParagraphStyle("HallTicketValue", parent=styles["Normal"], fontName="Helvetica", fontSize=9, leading=11, textColor=colors.HexColor("#0F172A"))
+    header = ParagraphStyle("HallTicketHeader", parent=styles["Normal"], fontName="Helvetica-Bold", fontSize=8.5, alignment=1, textColor=colors.white)
+    cell = ParagraphStyle("HallTicketCell", parent=styles["Normal"], fontName="Helvetica", fontSize=8.5, leading=11, textColor=colors.HexColor("#1E293B"))
+    note = ParagraphStyle("HallTicketNote", parent=styles["Normal"], fontName="Helvetica", fontSize=8, leading=11, textColor=colors.HexColor("#475569"))
+
+    issue_date = datetime.now().strftime("%d %B %Y")
+    roll_number = str(student_info.get("roll_number") or student_info.get("id") or "N/A")
+    story = [
+        Paragraph("STUDENT ENROLLMENT & RESULT MANAGEMENT SYSTEM", title),
+        Spacer(1, 3),
+        Paragraph("Office of the Controller of Examinations", subtitle),
+        Spacer(1, 8),
+        HRFlowable(width="100%", thickness=2, color=colors.HexColor("#1E3A8A"), spaceAfter=8),
+        Paragraph(f"HALL TICKET / ADMIT CARD — SEMESTER {semester}", heading),
+        Spacer(1, 10),
+    ]
+    info = [
+        [Paragraph("Student Name:", label), Paragraph(str(student_info.get("name", "N/A")), value), Paragraph("Roll Number / ID:", label), Paragraph(roll_number, value)],
+        [Paragraph("Department:", label), Paragraph(str(student_info.get("department", "GENERAL")), value), Paragraph("Academic Semester:", label), Paragraph(f"Semester {semester}", value)],
+        [Paragraph("Email:", label), Paragraph(str(student_info.get("email", "N/A")), value), Paragraph("Date of Issue:", label), Paragraph(issue_date, value)],
+    ]
+    info_table = Table(info, colWidths=[105, 160, 115, 143])
+    info_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F8FAFC")), ("BOX", (0, 0), (-1, -1), 1, colors.HexColor("#CBD5E1")),
+        ("INNERGRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")), ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5), ("LEFTPADDING", (0, 0), (-1, -1), 8), ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+    ]))
+    story.extend([info_table, Spacer(1, 14)])
+
+    rows = [[Paragraph("#", header), Paragraph("Course", header), Paragraph("Examination", header), Paragraph("Date & Time", header), Paragraph("Room", header)]]
+    for index, exam in enumerate(exams, start=1):
+        exam_date = exam.get("date")
+        if isinstance(exam_date, datetime):
+            date_text = exam_date.strftime("%d %b %Y, %I:%M %p")
+        else:
+            date_text = str(exam_date or "To be announced")
+        rows.append([
+            Paragraph(str(index), cell),
+            Paragraph(f"<b>{exam.get('course_code', '')}</b><br/>{exam.get('course_title', 'Course')}", cell),
+            Paragraph(str(exam.get("title", "Examination")), cell),
+            Paragraph(date_text, cell),
+            Paragraph(str(exam.get("room_number") or "To be announced"), cell),
+        ])
+    schedule = Table(rows, colWidths=[26, 155, 125, 130, 87], repeatRows=1)
+    style = [("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1E3A8A")), ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("TOPPADDING", (0, 0), (-1, -1), 6), ("BOTTOMPADDING", (0, 0), (-1, -1), 6), ("LEFTPADDING", (0, 0), (-1, -1), 5), ("RIGHTPADDING", (0, 0), (-1, -1), 5)]
+    for row in range(1, len(rows)):
+        if row % 2 == 0:
+            style.append(("BACKGROUND", (0, row), (-1, row), colors.HexColor("#F8FAFC")))
+    schedule.setStyle(TableStyle(style))
+    story.extend([schedule, Spacer(1, 14)])
+    story.append(Paragraph("Instructions: Carry this hall ticket and a valid photo ID to every examination. Report to the assigned room at least 30 minutes before the scheduled time. Entry may be denied without this document.", note))
+    story.extend([Spacer(1, 24), HRFlowable(width="100%", thickness=0.6, color=colors.HexColor("#94A3B8")), Spacer(1, 5), Paragraph("Electronically generated hall ticket — valid without a physical signature.", note)])
+    doc.build(story)
+    pdf = buffer.getvalue()
+    buffer.close()
+    return pdf
